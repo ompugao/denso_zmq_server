@@ -11,6 +11,7 @@
 #include "message_types/joint_values.h"
 #include "context.h"
 #include "subscriber.h"
+#include "publisher.h"
 
 class DENSOZMQServer {
 public:
