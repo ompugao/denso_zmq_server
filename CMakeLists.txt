@@ -1,0 +1,27 @@
+project(sandbox)
+cmake_minimum_required(VERSION 3.16)
+
+
+if(COMMAND cmake_policy)
+    cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
+find_package(denso_control)
+
+if(denso_control_FOUND)
+    include_directories(${denso_control_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR})
+
+    list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+    find_package(ZeroMQ REQUIRED)
+    find_package(MsgPack REQUIRED)
+
+    include_directories(${ZeroMQ_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+    add_executable(main main.cpp context.cpp)
+    target_link_libraries(main ${denso_control_LIBRARIES} ${ZeroMQ_LIBRARY} zmqpp)
+    add_definitions(-DDENSO_CONTROL_FOUND)
+
+    #add_executable(disconnect disconnect.cpp)
+    #target_link_libraries(disconnect ${denso_control_LIBRARIES})
+    #add_definitions(-DDENSO_CONTROL_FOUND)
+endif()
+
