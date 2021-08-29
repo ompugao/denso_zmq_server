@@ -19,12 +19,12 @@ void Context::spin() {
     }
 }
 
+SubscriberHandle::SubscriberHandle(const boost::shared_ptr<Context>& context, const boost::shared_ptr<SubscriberBase>& sub): context_(context), sub_(sub) {
+}
 SubscriberHandle::~SubscriberHandle() {
     if (!context_) {
-        std::cout << "not well-defined subscirberhandle" << std::endl;
         return;
     }
-    std::cout << "unsubscribing..." << std::endl;
     std::vector<boost::shared_ptr<SubscriberBase>>::iterator itr =
         std::find(context_->subscribers_.begin(), context_->subscribers_.end(), sub_);
     if (itr != context_->subscribers_.end()) {

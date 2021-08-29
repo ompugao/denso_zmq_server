@@ -19,8 +19,7 @@ class SubscriberHandle {
 public:
     SubscriberHandle() {
     }
-    SubscriberHandle(const boost::shared_ptr<Context>& context, const boost::shared_ptr<SubscriberBase>& sub): context_(context), sub_(sub) {
-    }
+    SubscriberHandle(const boost::shared_ptr<Context>& context, const boost::shared_ptr<SubscriberBase>& sub);
     virtual ~SubscriberHandle();
 protected:
     boost::shared_ptr<Context> context_;
@@ -35,12 +34,12 @@ public:
     virtual ~Context() {
     }
     template<typename Msg> 
-    SubscriberHandle subscribe(const std::string& endpoint, 
+    boost::shared_ptr<SubscriberHandle> subscribe(const std::string& endpoint, 
             boost::function<void(const boost::shared_ptr<Msg>&)> callback,
             const bool blocking = false) {
         boost::shared_ptr<SubscriberBase> sub = boost::make_shared<Subscriber<Msg>>(this->zmqcontext_, endpoint, callback, blocking);
-        subscribers_.push_back(sub);
-        return std::move(SubscriberHandle(shared_from_this(), sub));
+        this->subscribers_.push_back(sub);
+        return boost::make_shared<SubscriberHandle>(shared_from_this(), sub);
     }
 
     bool isok() {

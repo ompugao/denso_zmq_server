@@ -17,6 +17,8 @@ public:
     DENSOZMQServer(const boost::shared_ptr<middleware::Context>& context, const std::string& ip_address):
         context_(context), b_stop_thread_(false) {
         denso_controller_.reset(new denso_control::RC8ControllerInterface(ip_address));
+        sub_ = context->subscribe<message_types::JointValues>("ipc://@denso/command", 
+                    boost::bind(&DENSOZMQServer::_CallbackJointValues, this, _1), /*blocking=*/ false);
         if (!denso_controller_->connect()) {
             return;
         }
@@ -24,14 +26,13 @@ public:
             denso_controller_->clearError();
         }
         thread_.reset(new boost::thread(boost::bind(&DENSOZMQServer::_ControlThread, this)));
-        sub_ = context->subscribe<message_types::JointValues>("ipc://@denso/command", 
-                    boost::bind(&DENSOZMQServer::_CallbackJointValues, this, _1), /*blocking=*/ false);
     }
     virtual ~DENSOZMQServer() {
         b_stop_thread_ = true;
         if (!!thread_) {
             thread_->join();
         }
+        sub_.reset();
         if (denso_controller_->getErrorCode() != 0) {
             denso_controller_->clearError();
         }
@@ -73,7 +74,7 @@ public:
 
     }
     boost::shared_ptr<middleware::Context> context_;
-    middleware::SubscriberHandle sub_;
+    boost::shared_ptr<middleware::SubscriberHandle> sub_;
     //boost::unique_ptr<SubscriberBase> sub_;
     boost::shared_ptr<boost::thread> thread_;
     std::atomic<bool> b_stop_thread_;
