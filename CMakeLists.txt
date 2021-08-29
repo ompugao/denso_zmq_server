@@ -16,7 +16,7 @@ if(denso_control_FOUND)
     find_package(Boost REQUIRED COMPONENTS system)
     find_package(MsgPack REQUIRED)
 
-    add_library(middleware SHARED context.cpp)
+    add_library(middleware SHARED middleware/context.cpp)
     target_link_libraries(middleware ${Boost_LIBRARIES} ${ZeroMQ_LIBRARY} zmqpp)
     include_directories(${ZeroMQ_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
     add_executable(densobcapserver main.cpp)

@@ -8,8 +8,8 @@
 #include <atomic>
 
 #include "message_types/joint_values.h"
-#include "context.h"
-#include "subscriber.h"
+#include "middleware/context.h"
+#include "middleware/subscriber.h"
 void _CallbackJointValues(const boost::shared_ptr<message_types::JointValues>& msg) {
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count() << ": ";
     for (auto&& v : msg->values) {

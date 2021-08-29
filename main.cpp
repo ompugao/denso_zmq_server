@@ -11,9 +11,9 @@
 #include <atomic>
 
 #include "message_types/joint_values.h"
-#include "context.h"
-#include "subscriber.h"
-#include "publisher.h"
+#include "middleware/context.h"
+#include "middleware/subscriber.h"
+#include "middleware/publisher.h"
 
 template<int NUM_JOINTS> 
 class DENSOZMQServer {
@@ -151,6 +151,5 @@ int main(int argc, char * argv[])
     DENSOZMQServer<6> server(context, vm["ip_address"].as<std::string>());
 
     context->spin();
-    //std::vector<double> js_position_(6), cmd_pos(6);
     return 0;
 }

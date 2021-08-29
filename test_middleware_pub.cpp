@@ -8,8 +8,8 @@
 #include <atomic>
 
 #include "message_types/joint_values.h"
-#include "context.h"
-#include "publisher.h"
+#include "middleware/context.h"
+#include "middleware/publisher.h"
 
 int main(int argc, char * argv[])
 {
