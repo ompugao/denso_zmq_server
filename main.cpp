@@ -6,6 +6,8 @@
 #include <thread>
 #include <boost/thread.hpp>
 #include <boost/program_options.hpp>
+#include <boost/lockfree/queue.hpp>
+#include <boost/array.hpp>
 #include <atomic>
 
 #include "message_types/joint_values.h"
@@ -13,11 +15,13 @@
 #include "subscriber.h"
 #include "publisher.h"
 
+template<int NUM_JOINTS> 
 class DENSOZMQServer {
 public:
     DENSOZMQServer(const boost::shared_ptr<middleware::Context>& context, const std::string& ip_address):
-        context_(context), b_stop_thread_(false) {
+        context_(context), b_stop_thread_(false), command_queue_(3) {
         denso_controller_.reset(new denso_control::RC8ControllerInterface(ip_address));
+        pub_ = context->advertise("ipc://@denso/joint_values");
         sub_ = context->subscribe<message_types::JointValues>("ipc://@denso/command", 
                     boost::bind(&DENSOZMQServer::_CallbackJointValues, this, _1), /*blocking=*/ false);
         if (!denso_controller_->connect()) {
@@ -46,40 +50,63 @@ public:
         std::cout << "disconnect" << std::endl;
         denso_controller_->disconnect();
     }
+
+protected:
     void _CallbackJointValues(const boost::shared_ptr<message_types::JointValues>& msg) {
+        boost::array<double, NUM_JOINTS> cmd;
+        if (msg->values.size() != NUM_JOINTS) {
+            std::cerr << "Invalid number of joint values" << std::endl;
+            return;
+        }
+        std::copy(std::begin(msg->values), std::end(msg->values), cmd.begin());
+        while(!command_queue_.bounded_push(cmd)) {
+            std::this_thread::yield();
+        };
     }
     void _ControlThread() {
-        std::vector<double> js_position_(6), cmd_pos(6);
+        message_types::JointValues joint_values;
+        boost::array<double, NUM_JOINTS> cmd_pos_arr;
+        std::vector<double> cmd_pos(NUM_JOINTS);
+        joint_values.values.resize(NUM_JOINTS);
 
         bool result = denso_controller_->startMotors(100.0);
         denso_controller_->update();
-        denso_controller_->getJointPositions(js_position_);
+        denso_controller_->getJointPositions(joint_values.values);
         denso_controller_->getJointPositions(cmd_pos);
 
-
+        pub_->publish(joint_values);
         std::chrono::high_resolution_clock::time_point tloopstart_;
         while(context_->isok()) {
+            if (b_stop_thread_) {
+                break;
+            }
             tloopstart_ = std::chrono::high_resolution_clock::now();
             std::cout << std::fixed << std::chrono::duration_cast<std::chrono::milliseconds>(tloopstart_.time_since_epoch()).count() << std::endl;
+            if (command_queue_.pop(cmd_pos_arr)) {
+                std::copy(cmd_pos_arr.begin(), cmd_pos_arr.end(), cmd_pos.begin());
+            }
             if (denso_controller_->getErrorCode() != 0) {
+                std::this_thread::yield();
                 break;
             }
             if (denso_controller_->motorsON()) {
                 denso_controller_->setJointPositions(cmd_pos);
             }
             denso_controller_->update();
-            denso_controller_->getJointPositions(js_position_);
+            denso_controller_->getJointPositions(joint_values.values);
 
+            pub_->publish(joint_values);
             std::this_thread::sleep_until(tloopstart_ + std::chrono::milliseconds(8));
         }
-
     }
     boost::shared_ptr<middleware::Context> context_;
     boost::shared_ptr<middleware::SubscriberHandle> sub_;
+    boost::shared_ptr<middleware::Publisher> pub_;
     //boost::unique_ptr<SubscriberBase> sub_;
     boost::shared_ptr<boost::thread> thread_;
     std::atomic<bool> b_stop_thread_;
     boost::shared_ptr<denso_control::RC8ControllerInterface> denso_controller_;
+    boost::lockfree::queue<boost::array<double, NUM_JOINTS>> command_queue_;
 };
 
 int main(int argc, char * argv[])
@@ -121,7 +148,7 @@ int main(int argc, char * argv[])
         return 1;
     }
     boost::shared_ptr<middleware::Context> context(new middleware::Context());
-    DENSOZMQServer server(context, vm["ip_address"].as<std::string>());
+    DENSOZMQServer<6> server(context, vm["ip_address"].as<std::string>());
 
     context->spin();
     //std::vector<double> js_position_(6), cmd_pos(6);
