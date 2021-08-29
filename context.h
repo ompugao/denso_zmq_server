@@ -7,6 +7,7 @@
 
 #include <zmqpp/zmqpp.hpp>
 #include "subscriber.h"
+#include "publisher.h"
 
 namespace middleware {
 
@@ -40,6 +41,10 @@ public:
         boost::shared_ptr<SubscriberBase> sub = boost::make_shared<Subscriber<Msg>>(this->zmqcontext_, endpoint, callback, blocking);
         this->subscribers_.push_back(sub);
         return boost::make_shared<SubscriberHandle>(shared_from_this(), sub);
+    }
+
+    boost::shared_ptr<Publisher> advertise(const std::string& endpoint) {
+        return boost::make_shared<Publisher>(this->zmqcontext_, endpoint);
     }
 
     bool isok() {

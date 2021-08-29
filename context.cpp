@@ -28,6 +28,7 @@ SubscriberHandle::~SubscriberHandle() {
     std::vector<boost::shared_ptr<SubscriberBase>>::iterator itr =
         std::find(context_->subscribers_.begin(), context_->subscribers_.end(), sub_);
     if (itr != context_->subscribers_.end()) {
+        std::cout << "unsubscribing.." << std::endl;
         context_->subscribers_.erase(itr);
     }
     sub_.reset();

@@ -34,12 +34,21 @@ public:
     }
     virtual ~Subscriber() {
         // Unreachable, but for good measure
-        socket_->disconnect(endpoint_);
+        if (!!socket_) {
+            socket_->disconnect(endpoint_);
+        }
     }
     void receive() override {
         zmqpp::message message;
-        bool received = socket_->receive(message, !blocking_);
-        if (!blocking_ && !received) {
+        try {
+            //std::cout << "receiving" << std::endl;
+            bool received = socket_->receive(message, !blocking_);
+            if (!blocking_ && !received) {
+                //std::cout << "??" << std::endl;
+                return;
+            }
+        } catch (zmqpp::exception& e) {
+            std::cerr << e.what() << std::endl;
             return;
         }
 

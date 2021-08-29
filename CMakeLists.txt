@@ -13,12 +13,18 @@ if(denso_control_FOUND)
 
     list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
     find_package(ZeroMQ REQUIRED)
+    find_package(Boost REQUIRED COMPONENTS system)
     find_package(MsgPack REQUIRED)
 
     include_directories(${ZeroMQ_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
     add_executable(main main.cpp context.cpp)
-    target_link_libraries(main ${denso_control_LIBRARIES} ${ZeroMQ_LIBRARY} zmqpp)
+    target_link_libraries(main ${denso_control_LIBRARIES} ${MSGPACK_LIBRARIES} ${ZeroMQ_LIBRARY} zmqpp)
     add_definitions(-DDENSO_CONTROL_FOUND)
+
+    add_executable(test_middleware_sub test_middleware_sub.cpp context.cpp)
+    target_link_libraries(test_middleware_sub ${Boost_LIBRARIES} ${ZeroMQ_LIBRARY} zmqpp)
+    add_executable(test_middleware_pub test_middleware_pub.cpp context.cpp)
+    target_link_libraries(test_middleware_pub ${Boost_LIBRARIES} ${ZeroMQ_LIBRARY} zmqpp)
 
     #add_executable(disconnect disconnect.cpp)
     #target_link_libraries(disconnect ${denso_control_LIBRARIES})

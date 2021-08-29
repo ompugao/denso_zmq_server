@@ -10,11 +10,11 @@ if(MSGPACK_LIBRARY)
     set(MSGPACK_FOUND ON)
 endif()
 
-set ( MSGPACK_LIBRARIES ${MSGPACK_LIBRARY} )
+# set ( MSGPACK_LIBRARIES ${MSGPACK_LIBRARY} )
 set ( MSGPACK_INCLUDE_DIRS ${MSGPACK_INCLUDE_DIR} )
 
 include ( FindPackageHandleStandardArgs )
 # handle the QUIETLY and REQUIRED arguments and set ZMQ_FOUND to TRUE
 # if all listed variables are TRUE
-find_package_handle_standard_args ( MSGPACK DEFAULT_MSG MSGPACK_LIBRARIES ZeroMQ_INCLUDE_DIRS )
+find_package_handle_standard_args ( MSGPACK DEFAULT_MSG MSGPACK_INCLUDE_DIRS )
 
