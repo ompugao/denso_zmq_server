@@ -27,6 +27,11 @@ if(denso_control_FOUND)
     target_link_libraries(test_middleware_sub middleware)
     add_executable(test_middleware_pub test_middleware_pub.cpp)
     target_link_libraries(test_middleware_pub middleware)
+    add_executable(test_middleware_client test_middleware_client.cpp)
+    target_link_libraries(test_middleware_client middleware)
+    add_executable(test_middleware_server test_middleware_server.cpp)
+    target_link_libraries(test_middleware_server middleware)
+
 
     #add_executable(disconnect disconnect.cpp)
     #target_link_libraries(disconnect ${denso_control_LIBRARIES})

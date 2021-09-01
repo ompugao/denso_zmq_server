@@ -8,8 +8,17 @@
 #include <zmqpp/zmqpp.hpp>
 #include "subscriber.h"
 #include "publisher.h"
+#include "serviceserver.h"
+#include "serviceclient.h"
 
 namespace middleware {
+
+namespace init_options {
+enum InitOptions {
+    NoSignalHandler = 0x01
+};
+} // namespace init_options
+using InitOptions = init_options::InitOptions;
 
 static std::atomic<bool> g_shutdown(false);
 void signal_handler(int signal);
@@ -27,10 +36,23 @@ protected:
     boost::shared_ptr<SubscriberBase> sub_;
 };
 
+class ServiceServerHandle {
+public:
+    ServiceServerHandle() {
+    }
+    ServiceServerHandle(const boost::shared_ptr<Context>& context, const boost::shared_ptr<ServiceServerBase>& sub);
+    virtual ~ServiceServerHandle();
+protected:
+    boost::shared_ptr<Context> context_;
+    boost::shared_ptr<ServiceServerBase> server_;
+};
+
 class Context : public boost::enable_shared_from_this<Context> {
 public:
-    Context() {
-        std::signal(SIGINT, signal_handler);
+    Context(int options=0) {
+        if (!(options && InitOptions::NoSignalHandler)) {
+            std::signal(SIGINT, signal_handler);
+        }
     }
     virtual ~Context() {
     }
@@ -47,15 +69,29 @@ public:
         return boost::make_shared<Publisher>(this->zmqcontext_, endpoint);
     }
 
+    template<typename Request, typename Response> 
+    boost::shared_ptr<ServiceServerHandle> advertiseServer(const std::string& endpoint, 
+            boost::function<bool(const boost::shared_ptr<Request>&, boost::shared_ptr<Response>&)> callback) {
+        boost::shared_ptr<ServiceServerBase> server = boost::make_shared<ServiceServer<Request, Response>>(this->zmqcontext_, endpoint, callback);
+        this->serviceservers_.push_back(server);
+        return boost::make_shared<ServiceServerHandle>(shared_from_this(), server);
+    }
+
+    boost::shared_ptr<ServiceClient> serviceClient(const std::string& endpoint) {
+        return boost::make_shared<ServiceClient>(this->zmqcontext_, endpoint);
+    }
+
     bool isok() {
         return !g_shutdown;
     }
-    void spin();
     void spinonce();
+    void spin();
     friend class SubscriberHandle;
+    friend class ServiceServerHandle;
 protected:
     zmqpp::context zmqcontext_;
     std::vector<boost::shared_ptr<SubscriberBase>> subscribers_;
+    std::vector<boost::shared_ptr<ServiceServerBase>> serviceservers_;
 };
 
 
