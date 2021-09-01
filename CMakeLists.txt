@@ -13,7 +13,7 @@ if(denso_control_FOUND)
 
     list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
     find_package(ZeroMQ REQUIRED)
-    find_package(Boost REQUIRED COMPONENTS system)
+    find_package(Boost REQUIRED COMPONENTS system thread)
     find_package(MsgPack REQUIRED)
 
     add_library(middleware SHARED middleware/context.cpp)

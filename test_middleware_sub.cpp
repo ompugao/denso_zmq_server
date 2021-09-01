@@ -10,12 +10,16 @@
 #include "message_types/joint_values.h"
 #include "middleware/context.h"
 #include "middleware/subscriber.h"
+std::chrono::high_resolution_clock::time_point t_last =std::chrono::high_resolution_clock::now();
 void _CallbackJointValues(const boost::shared_ptr<message_types::JointValues>& msg) {
-    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count() << ": ";
-    for (auto&& v : msg->values) {
-        std::cout << v << ", ";
-    }
+    //std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count() << ": ";
+    auto t = std::chrono::high_resolution_clock::now();
+    std::cout << (static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(t - t_last).count()) / 1000.0);// << ": ";
+    //for (auto&& v : msg->values) {
+    //    std::cout << v << ", ";
+    //}
     std::cout << std::endl;
+    t_last = t;
 }
 int main(int argc, char * argv[])
 {
@@ -30,11 +34,10 @@ int main(int argc, char * argv[])
     }
             
     boost::shared_ptr<middleware::Context> context(new middleware::Context());
-    boost::shared_ptr<middleware::SubscriberHandle> sub_ = context->subscribe<message_types::JointValues>("ipc://@denso/hoge", 
+    boost::shared_ptr<middleware::SubscriberHandle> sub_ = context->subscribe<message_types::JointValues>("ipc://@denso/joint_values", 
                     _CallbackJointValues, /*blocking=*/ false);
-    // boost::shared_ptr<middleware::SubscriberHandle> sub_ = context->subscribe<message_types::JointValues>("tcp://localhost:4242", 
-    //                 _CallbackJointValues, /*blocking=*/ false);
-    std::cout << "spin!" << std::endl;
     context->spin();
+    boost::thread thread(boost::bind(&middleware::Context::spin, context));
+    thread.join();
     return 0;
-    }
+}

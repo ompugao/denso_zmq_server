@@ -23,7 +23,7 @@ int main(int argc, char * argv[])
     }
             
     boost::shared_ptr<middleware::Context> context(new middleware::Context());
-    auto pub = context->advertise("ipc://@denso/hoge");
+    auto pub = context->advertise("ipc://@denso/joint_values");
     // auto pub = context->advertise("tcp://*:4242");
     for (int i = 0; i < 100; i++) {
         message_types::JointValues msg;

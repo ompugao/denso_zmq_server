@@ -10,11 +10,15 @@ void signal_handler(int signal)
     g_shutdown = true;
 }
 
+void Context::spinonce() {
+    for (auto&& sub : subscribers_) {
+        sub->receive();
+    }
+}
+
 void Context::spin() {
     while (isok()) {
-        for (auto&& sub : subscribers_) {
-            sub->receive();
-        }
+        spinonce();
         std::this_thread::yield();
     }
 }

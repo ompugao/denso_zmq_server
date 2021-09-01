@@ -51,6 +51,7 @@ public:
         return !g_shutdown;
     }
     void spin();
+    void spinonce();
     friend class SubscriberHandle;
 protected:
     zmqpp::context zmqcontext_;
